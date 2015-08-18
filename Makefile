@@ -94,6 +94,9 @@ pop_crossover_rate := $(shell echo '4 * $(N0) * $(per_gen_crossover_rate) * ($(h
 
 sequences: $(dirs) $(sequence_output)
 trees: $(dirs) $(tree_output)
+	python3 $(script_dir)/split_tree_output.py \
+		--input=$(tree_output) \
+		--output_prefix=locus
 
 plot_phylogeny: $(dirs)
 	Rscript $(script_dir)/plot_phylogeny.R \
