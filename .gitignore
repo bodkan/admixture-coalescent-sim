@@ -1,0 +1,5 @@
+output/
+fig/
+
+.RData
+.Rhistory
