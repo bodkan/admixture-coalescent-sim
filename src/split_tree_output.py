@@ -27,17 +27,13 @@ def main(input_filename, output_prefix):
                     if ith_locus > 0: output_file.close()
 
                     ith_locus += 1
-                    output_filename = "output/" + output_prefix + "_" + str(ith_locus) + ".txt"
+                    output_filename = "output/" + output_prefix + str(ith_locus) + ".newick"
                     output_file = open(output_filename, "w")
 
                     continue
 
-                # dump the line into a separate output file removing [ and ]
-                # characters from the beginning of the line
-                # (the number in brackets specifies the length of a given
-                # segment which is read by downstream R scripts and which gets
-                # ignored unless the brackets are filtered out)
-                print(line.replace("[", "").replace("]", ""), end = "", file = output_file)
+                # dump the line into a separate output file
+                print(line, end = "", file = output_file)
 
     except FileNotFoundError:
         print("Input file {} not found!".format(input_filename))

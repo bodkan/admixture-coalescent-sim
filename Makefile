@@ -7,7 +7,6 @@ script_dir := src
 dirs := $(output_dir) $(fig_dir)
 
 tree_output := $(output_dir)/trees.txt
-sequence_output := $(output_dir)/sequences.fasta
 
 simulator_bin := scrm
 
@@ -92,34 +91,40 @@ per_gen_crossover_rate := 1*10^-8
 pop_mut_rate := $(shell echo '4 * $(N0) * $(per_gen_mut_rate) * $(hap_length)' | bc -l)
 pop_crossover_rate := $(shell echo '4 * $(N0) * $(per_gen_crossover_rate) * ($(hap_length)-1)' | bc -l)
 
-sequences: $(dirs) $(sequence_output)
-trees: $(dirs) $(tree_output)
+tree_files := $(addsuffix .newick, $(addprefix $(output_dir)/locus_, $(shell seq 1 $(n_haplotypes))))
+fasta_files := $(addsuffix .fasta, $(addprefix $(output_dir)/locus_, $(shell seq 1 $(n_haplotypes))))
+phylogeny_plots := $(addsuffix .pdf, $(addprefix $(fig_dir)/phylogeny_locus_, $(shell seq 1 $(n_haplotypes))))
+coalescent_plots := $(addsuffix .pdf, $(addprefix $(fig_dir)/coalescent_locus_, $(shell seq 1 $(n_haplotypes))))
+
+all: $(phylogeny_plots) $(coalescent_plots)
+
+$(output_dir)/locus_%.fasta: $(output_dir)/locus_%.newick
+	seq-gen -mHKY -l $(hap_length) -p `wc -l $< | cut -f1 -d' '` < $< > $<_tmp; \
+	tail -n+2 $<_tmp | awk '{ print ">"$$1"\n"$$2 }' > $@; \
+	rm $<_tmp
+
+$(output_dir)/locus_%.newick: $(dirs) $(tree_output)
 	python3 $(script_dir)/split_tree_output.py \
 		--input=$(tree_output) \
-		--output_prefix=locus
+		--output_prefix=locus_
 
-plot_phylogeny: $(dirs)
+$(fig_dir)/phylogeny_locus_%.pdf: $(output_dir)/locus_%.fasta
 	Rscript $(script_dir)/plot_phylogeny.R \
-		--fasta=$(sequence_output) \
+		--fasta=$< \
 		--n_afr=$(n_afr) \
 		--n_eur=$(n_eur) \
 		--n_nea=$(n_nea) \
-		--output=$(fig_dir)/phylogeny.pdf
+		--output=$@
 
-plot_coalescent:
+$(fig_dir)/coalescent_locus_%.pdf: $(output_dir)/locus_%.newick
 	Rscript $(script_dir)/find_introgressed_segments.R \
-		--tree_file=$(tree_output) \
+		--tree_file=$< \
 		--n_afr=$(n_afr) \
 		--n_eur=$(n_eur) \
 		--n_nea=$(n_nea) \
 		--split_time=$(call scale_time, $(T_nea_modh_split)) \
-		--output=$(fig_dir)/coalescent_trees.pdf
+		--output=$@
 	
-$(sequence_output): $(tree_output)
-	seq-gen -mHKY -l $(hap_length) -p `wc -l $< | cut -f1 -d' '` < $< > $@_tmp
-	tail -n+2 $@_tmp | awk '{ print ">"$$1"\n"$$2 }' > $@
-	rm $@_tmp
-
 $(tree_output):
 	$(simulator_bin) `expr $(n_afr) + $(n_eur) + $(n_nea)` $(n_haplotypes) -T \
 	    `# generate samples from three populations: AFR, EUR, Neandertals` \
