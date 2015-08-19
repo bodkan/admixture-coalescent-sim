@@ -7,16 +7,17 @@ Usage:
 
 Options:
     --tree_file=<FILENAME>  file containing genealogies
-    --n_afr=<COUNT>     number of simulated Africans
-    --n_eur=<COUNT>     number of simulated Europeans
-    --n_nea=<COUNT>     number of simulated Neandertals
+    --n_afr=<COUNT>         number of simulated Africans
+    --n_eur=<COUNT>         number of simulated Europeans
+    --n_nea=<COUNT>         number of simulated Neandertals
     --split_time=<TIME>     time of the split between Africans and Eurasians
-    --output=<FILENAME> name of the output PDF file
+    --output=<FILENAME>     name of the output PDF file
     -h --help               show this help" -> doc
 
 opts <- docopt(doc)
 
-if (with(opts, is.null(tree_file) | is.null(n_afr) | is.null(n_eur) | is.null(n_nea) | is.null(split_time) | is.null(output))) {
+if (with(opts, is.null(tree_file) | is.null(n_afr) | is.null(n_eur) |
+               is.null(n_nea) | is.null(split_time) | is.null(output))) {
     writeLines(doc)
     stop("All arguments have to be specified!")
 }
@@ -55,16 +56,17 @@ for (i in 1 : length(trees)) {
     # get a time of coalescence (i.e. distance within the tree) with Neandertal
     coalesc_time <- dist.nodes(tree)[nea_taxon_ids, parent_node]
 
-    tree_count <- paste(i, "/", length(trees))
-    if (coalesc_time < opts$split_time)
-        cat("tree ", tree_count, " -- introgression detected!\n")
+    plot_title <- paste0(
+        i, "/", length(trees),
+        if (coalesc_time < opts$split_time) {" (introgression)" }
+    )
 
-    plot(tree, edge.width = 2, label.offset = 0.0003, main = paste0(tree_count, " - ", coalesc_time < opts$split_time))
+    plot(tree, main = plot_title, edge.width = 2, label.offset = 0.0003)
     tiplabels(tip = afr_taxon_ids, bg = "yellow", pch = 24, cex = 1.4)
     tiplabels(tip = eur_taxon_ids, bg = "green", pch = 22, cex = 1.7)
     tiplabels(tip = nea_taxon_ids, bg = "red", pch = 21, cex = 1.7)
-    legend("bottomleft", legend = c("AFR", "EUR", "NEA"), pt.bg = c("yellow", "green", "red"),
-        pch = c(24, 22, 21), cex = 1.5)
+    legend("bottomleft", legend = c("AFR", "EUR", "NEA"), cex = 1.5,
+           pt.bg = c("yellow", "green", "red"), pch = c(24, 22, 21))
 }
 
 dev.off()
