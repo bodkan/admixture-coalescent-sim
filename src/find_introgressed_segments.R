@@ -31,13 +31,27 @@ library(magrittr)
 library(ape)
 library(phangorn)
 
-# read a list of trees from a given file
-trees <- read.tree(opts$tree_file)
+# read a list of trees from a given file:
+# - each line has a format such as[xyz](...) where xyz denotes the length
+#   of a given non-recombined block in basepairs and (...) is a tree definition
+#   in a Newick format
+# - the brackets around xyz have to be removed, because read.tree function
+#   regards them as comments otherwise
+trees <- readLines(opts$tree_file) %>%
+    sapply(function(line) {
+        gsub(pattern = "\\[|\\]", replacement = "", line)
+    }, USE.NAMES = FALSE) %>%
+    read.tree(text = .)
 
 pdf(opts$output, 10, 14)
 
+total_introgressed <- 0
+
 for (i in 1 : length(trees)) {
     tree <- trees[[i]]
+
+    # extract the segment length from a tree name
+    segment_length <- as.integer(names(trees[i]))
 
     # get IDs of tree nodes/leaves belonging to each simulated individual
     # (the names of the sequences do not necessarily correspond to their IDs
@@ -67,6 +81,13 @@ for (i in 1 : length(trees)) {
     tiplabels(tip = nea_taxon_ids, bg = "red", pch = 21, cex = 1.7)
     legend("bottomleft", legend = c("AFR", "EUR", "NEA"), cex = 1.5,
            pt.bg = c("yellow", "green", "red"), pch = c(24, 22, 21))
+
+    if (coalesc_time < opts$split_time)
+        total_introgressed <- total_introgressed + segment_length
 }
 
 dev.off()
+
+cat("proportion of introgressed segments: ",
+    total_introgressed / (names(trees) %>% as.integer %>% sum) * 100,
+    "%\n")
