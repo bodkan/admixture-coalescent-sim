@@ -96,7 +96,8 @@ fasta_files := $(addsuffix .fasta, $(addprefix $(output_dir)/locus_, $(shell seq
 phylogeny_plots := $(addsuffix .pdf, $(addprefix $(fig_dir)/phylogeny_locus_, $(shell seq 1 $(n_haplotypes))))
 coalescent_plots := $(addsuffix .pdf, $(addprefix $(fig_dir)/coalescent_locus_, $(shell seq 1 $(n_haplotypes))))
 
-all: $(tree_files) $(fasta_files) $(phylogeny_plots) $(coalescent_plots)
+coalescent: $(tree_files) $(coalescent_plots)
+phylogeny: $(fasta_files) $(phylogeny_plots)
 
 $(output_dir)/locus_%.fasta: $(output_dir)/locus_%.newick
 	seq-gen -mHKY -l $(hap_length) -p `wc -l $< | cut -f1 -d' '` < $< > $<_tmp; \
