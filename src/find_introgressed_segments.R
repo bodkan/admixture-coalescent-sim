@@ -15,6 +15,7 @@ Options:
     -h --help               show this help" -> doc
 
 opts <- docopt(doc)
+#opts <- docopt(doc, "--tree_file=output/locus_1.newick --n_afr=50 --n_eur=50 --n_nea=1 --split_time=.01367187500000 --output=asd")
 
 if (with(opts, is.null(tree_file) | is.null(n_afr) | is.null(n_eur) |
                is.null(n_nea) | is.null(split_time) | is.null(output))) {
@@ -56,9 +57,9 @@ for (i in 1 : length(trees)) {
     # get IDs of tree nodes/leaves belonging to each simulated individual
     # (the names of the sequences do not necessarily correspond to their IDs
     # within the tree)
-    afr_taxon_ids <- which(tree$tip.label %in% ((1                       : opts$n_afr)              %>% as.character))
-    eur_taxon_ids <- which(tree$tip.label %in% ((opts$n_afr + 1          : opts$n_eur)              %>% as.character))
-    nea_taxon_ids <- which(tree$tip.label %in% ((opts$n_afr + opts$n_eur : opts$n_eur + opts$n_nea) %>% as.character))
+    afr_taxon_ids <- which(tree$tip.label %in% ((1                       : opts$n_afr)       %>% as.character))
+    eur_taxon_ids <- which(tree$tip.label %in% ((opts$n_afr + (1         : opts$n_eur))      %>% as.character))
+    nea_taxon_ids <- which(tree$tip.label %in% ((opts$n_afr + opts$n_eur + (1 : opts$n_nea)) %>% as.character))
 
     # get index of an immediate parent node of the Neandertal sequence
     parent_node <- Ancestors(tree, node = nea_taxon_ids, type = "parent")
