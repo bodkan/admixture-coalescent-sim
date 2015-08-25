@@ -79,7 +79,7 @@ m_afr_eur := 2.5*10^-5
 
 # introgression parameters (Vernot and Akey, Science 2014)
 T_1st_pulse_start := $(shell echo '(36000 + 55000) / 2' | bc)
-T_1st_pulse_end := $(shell echo '$(T_1st_pulse_start) + 500' | bc)
+T_1st_pulse_end := $(shell echo '$(T_1st_pulse_start) - 500' | bc)
 m_first_pulse := 0.0015
 
 # mutation rate per site per generation
