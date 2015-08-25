@@ -32,6 +32,10 @@ library(magrittr)
 library(ape)
 library(phangorn)
 
+afr_sequence_ids <- as.character(1 : opts$n_afr)
+eur_sequence_ids <- as.character(opts$n_afr + (1 : opts$n_eur))
+nea_sequence_ids <- as.character(opts$n_afr + opts$n_eur + (1 : opts$n_nea))
+
 # read a list of trees from a given file:
 # - each line has a format such as[xyz](...) where xyz denotes the length
 #   of a given non-recombined block in basepairs and (...) is a tree definition
@@ -46,7 +50,9 @@ trees <- readLines(opts$tree_file) %>%
 
 pdf(opts$output, 10, 14)
 
-total_introgressed <- 0
+# initialize the counter of lengths of introgressed segments in Europeans
+total_introgressed <- rep(0, opts$n_eur)
+names(total_introgressed) <- eur_sequence_ids
 
 for (i in 1 : length(trees)) {
     tree <- trees[[i]]
@@ -57,9 +63,9 @@ for (i in 1 : length(trees)) {
     # get IDs of tree nodes/leaves belonging to each simulated individual
     # (the names of the sequences do not necessarily correspond to their IDs
     # within the tree)
-    afr_taxon_ids <- which(tree$tip.label %in% ((1                       : opts$n_afr)       %>% as.character))
-    eur_taxon_ids <- which(tree$tip.label %in% ((opts$n_afr + (1         : opts$n_eur))      %>% as.character))
-    nea_taxon_ids <- which(tree$tip.label %in% ((opts$n_afr + opts$n_eur + (1 : opts$n_nea)) %>% as.character))
+    afr_taxon_ids <- which(tree$tip.label %in% afr_sequence_ids)
+    eur_taxon_ids <- which(tree$tip.label %in% eur_sequence_ids)
+    nea_taxon_ids <- which(tree$tip.label %in% nea_sequence_ids)
 
     # get index of an immediate parent node of the Neandertal sequence
     parent_node <- Ancestors(tree, node = nea_taxon_ids, type = "parent")
@@ -70,6 +76,13 @@ for (i in 1 : length(trees)) {
         .[! (. %in% nea_taxon_ids)]
     # get a time of coalescence (i.e. distance within the tree) with Neandertal
     coalesc_time <- dist.nodes(tree)[nea_taxon_ids, parent_node]
+
+    # increment the counter of length of introgressed segments for each European
+    # admixed in this segment
+    if (coalesc_time < opts$split_time) {
+        total_introgressed[tree$tip.label[introgressed_seq]] <-
+            total_introgressed[tree$tip.label[introgressed_seq]] + segment_length
+    }
 
     plot_title <- paste0(
         i, "/", length(trees),
@@ -83,12 +96,11 @@ for (i in 1 : length(trees)) {
     legend("bottomleft", legend = c("AFR", "EUR", "NEA"), cex = 1.5,
            pt.bg = c("yellow", "green", "red"), pch = c(24, 22, 21))
 
-    if (coalesc_time < opts$split_time)
-        total_introgressed <- total_introgressed + segment_length
 }
 
 dev.off()
 
-cat("proportion of introgressed segments: ",
-    total_introgressed / (names(trees) %>% as.integer %>% sum) * 100,
-    "%\n")
+cat("proportion of introgressed segments:\n")
+print(total_introgressed / (names(trees) %>% as.integer %>% sum) * 100)
+cat("average per individual:\n")
+print(sum(total_introgressed / (names(trees) %>% as.integer %>% sum) * 100) / opts$n_eur)
