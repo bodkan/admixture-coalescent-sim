@@ -107,6 +107,7 @@ $(output_dir)/locus_%.fasta: $(output_dir)/locus_%.newick
 $(output_dir)/locus_%.newick: $(dirs) $(tree_output)
 	python3 $(script_dir)/split_tree_output.py \
 		--input=$(tree_output) \
+		--locus_number=$* \
 		--output_prefix=locus_
 
 $(fig_dir)/phylogeny_locus_%.pdf: $(output_dir)/locus_%.fasta
