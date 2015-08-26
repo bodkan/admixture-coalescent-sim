@@ -100,7 +100,4 @@ for (i in 1 : length(trees)) {
 
 dev.off()
 
-cat("proportion of introgressed segments:\n")
-print(total_introgressed / (names(trees) %>% as.integer %>% sum) * 100)
-cat("average per individual:\n")
-print(sum(total_introgressed / (names(trees) %>% as.integer %>% sum) * 100) / opts$n_eur)
+cat(file = sub("newick", "txt", opts$tree_file), total_introgressed / (names(trees) %>% as.integer %>% sum) * 100, "\n", sep = "\t")
